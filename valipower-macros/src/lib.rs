@@ -30,6 +30,8 @@ pub fn validate_derive(input: TokenStream) -> TokenStream {
                 .parse_args_with(Punctuated::<Meta, Token![,]>::parse_terminated)
                 .expect("Failed to parse validation rules");
 
+            ////////////////////////////////////////////////////////
+            // IMPLEMENT VALIDATION TYPES
             for meta in nested {
                 match meta {
                     Meta::Path(path) if path.is_ident("email") => {
@@ -45,6 +47,7 @@ pub fn validate_derive(input: TokenStream) -> TokenStream {
                     _ => { /* Ignore unknown rules */ }
                 }
             }
+            //////////////////////////////////////////////////////
         }
         quote! { #(#field_checks)* }
     });
