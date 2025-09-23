@@ -1,111 +1,110 @@
-// In my-validator-derive/src/lib.rs
-
 extern crate proc_macro;
 
 use proc_macro::TokenStream;
 use quote::quote;
-use syn::{DeriveInput, Meta, Token, parse_macro_input, punctuated::Punctuated};
+use syn::{
+    Data, DeriveInput, Expr, Fields, Ident, Lit, Meta, MetaList, Token, parse_macro_input,
+    punctuated::Punctuated,
+};
 
 #[proc_macro_derive(Validate, attributes(validate))]
 pub fn validate_derive(input: TokenStream) -> TokenStream {
-    // Parse the input tokens into a syntax tree
     let input = parse_macro_input!(input as DeriveInput);
     let name = &input.ident;
+
     let fields = match &input.data {
-        syn::Data::Struct(data_struct) => &data_struct.fields,
-        syn::Data::Enum(_) => todo!(),
-        syn::Data::Union(_) => todo!(),
+        Data::Struct(s) => &s.fields,
+        _ => panic!("Validate can only be derived for structs"),
     };
 
     let field_validators = fields.iter().map(|f| {
-        let field_name = f.ident.as_ref().unwrap();
+        let field_name = f.ident.as_ref().expect("Field must have a name");
         let mut field_checks = Vec::new();
 
-        for attribute in &f.attrs {
-            if !attribute.path().is_ident("valipower") {
+        for attr in &f.attrs {
+            if !attr.path().is_ident("validate") {
                 continue;
             }
-            // This parses the comma-separated list inside `validate(...)`
-            let nested = attribute
+
+            let nested = attr
                 .parse_args_with(Punctuated::<Meta, Token![,]>::parse_terminated)
-                .unwrap();
+                .expect("Failed to parse validation rules");
 
             for meta in nested {
                 match meta {
-                // Case 1: A simple path validator like `#[validate(email)]`
                     Meta::Path(path) if path.is_ident("email") => {
-                        let check = quote! {
-                            // `self.#field_name` refers to the field's value
+                        field_checks.push(quote! {
                             if !self.#field_name.contains('@') {
-                                 errors.add(stringify!(#field_name), "email", "Must be a valid email address.");
+                                errors.add(stringify!(#field_name), "email", "Must be a valid email address.");
                             }
-                        };
-                        field_checks.push(check);
+                        });
                     }
-
-                    // Case 2: A list validator like `#[validate(length(min=3))]`
                     Meta::List(list) if list.path.is_ident("length") => {
-                        // This is where you'd parse the arguments `min=3, max=20`
-                        // For brevity, we will implement this next
+                        field_checks.push(parse_length_rule(field_name, &list));
                     }
-                    
-                    // You would add more `Meta` arms for `range`, `alphanumeric`, etc.
-
-                    _ => {} // Ignore unknown validation rules
-
+                    _ => { /* Ignore unknown rules */ }
                 }
             }
         }
-
-        quote! {}
+        quote! { #(#field_checks)* }
     });
 
     let expanded = quote! {
-        impl valipower::Validate for #name{
-
-            fn validate(&self)-> Result<(),valipower::ValidationErrors>{
-                let mut errors = valipower::ValidationErrors::new();
+        impl my_validator::Validate for #name {
+            fn validate(&self) -> Result<(), my_validator::ValidationErrors> {
+                let mut errors = my_validator::ValidationErrors::new();
 
                 #(#field_validators)*
-                if (errors.is_empty()){
+
+                if errors.is_empty() {
                     Ok(())
-                }else{
+                } else {
                     Err(errors)
                 }
             }
         }
-
     };
 
-    // // Here, you would parse the attributes on each field.
-    // // This is a complex task involving iterating through `input.data`,
-    // // finding fields, and parsing their `attrs`.
-    // // For this example, we'll hardcode a check for a field named `username`.
-    //
-    // // This is a simplified generation logic. A real implementation
-    // // would dynamically build this based on parsed attributes.
-    // let validation_logic = quote! {
-    //     // Let's pretend we parsed an attribute for a field named `username`
-    //     if self.username.len() < 3 {
-    //         // In a real scenario, you'd populate your `ValidationErrors` struct here
-    //         println!("Username is too short!");
-    //         // return Err(...);
-    //     }
-    // };
-    //
-    // let expanded = quote! {
-    //     // Generate the implementation of the `Validate` trait
-    //     impl Validate for #name {
-    //         fn validate(&self) -> Result<(), ValidationErrors> {
-    //             // Insert the validation logic we generated
-    //             #validation_logic
-    //
-    //             // If all checks pass
-    //             Ok(())
-    //         }
-    //     }
-    // };
-
-    // Hand the generated code back to the compiler
     TokenStream::from(expanded)
+}
+
+fn parse_length_rule(field_name: &Ident, list: &MetaList) -> proc_macro2::TokenStream {
+    let mut min_val: Option<usize> = None;
+    let mut max_val: Option<usize> = None;
+
+    let nested = list
+        .parse_args_with(Punctuated::<Meta, Token![,]>::parse_terminated)
+        .unwrap();
+
+    for meta in nested {
+        if let Meta::NameValue(nv) = meta {
+            if let Expr::Lit(expr_lit) = nv.value {
+                if let Lit::Int(lit_int) = expr_lit.lit {
+                    if nv.path.is_ident("min") {
+                        min_val = Some(lit_int.base10_parse().unwrap());
+                    } else if nv.path.is_ident("max") {
+                        max_val = Some(lit_int.base10_parse().unwrap());
+                    }
+                }
+            }
+        }
+    }
+
+    let mut checks = vec![];
+    if let Some(min) = min_val {
+        checks.push(quote! {
+            if self.#field_name.len() < #min {
+                errors.add(stringify!(#field_name), "length", &format!("Length must be at least {}.", #min));
+            }
+        });
+    }
+    if let Some(max) = max_val {
+        checks.push(quote! {
+            if self.#field_name.len() > #max {
+                errors.add(stringify!(#field_name), "length", &format!("Length must be no more than {}.", #max));
+            }
+        });
+    }
+
+    quote! { #(#checks)* }
 }
