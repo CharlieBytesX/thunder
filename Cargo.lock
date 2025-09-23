@@ -3545,6 +3545,7 @@ dependencies = [
  "tokio",
  "tracing",
  "tracing-subscriber",
+ "valipower",
 ]
 
 [[package]]

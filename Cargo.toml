@@ -17,3 +17,4 @@ sea-orm = { version = "1.1.16", features = ["sqlx-sqlite", "sqlx-postgres", "run
 tokio = { version = "1.47.1", features = ["macros"] }
 tracing = "0.1.41"
 tracing-subscriber = "0.3.20"
+valipower = {path = "./valipower"}
