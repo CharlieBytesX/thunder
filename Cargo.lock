@@ -3964,6 +3964,22 @@ dependencies = [
 ]
 
 [[package]]
+name = "valipower"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "valipower-macros",
+]
+
+[[package]]
+name = "valipower-macros"
+version = "0.1.0"
+dependencies = [
+ "quote",
+ "syn 2.0.106",
+]
+
+[[package]]
 name = "valuable"
 version = "0.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
