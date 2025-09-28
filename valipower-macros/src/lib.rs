@@ -3,8 +3,8 @@ extern crate proc_macro;
 use proc_macro::TokenStream;
 use quote::quote;
 use syn::{
-    Data, DeriveInput, Expr, Fields, Ident, Lit, Meta, MetaList, Token, parse_macro_input,
-    punctuated::Punctuated,
+    Data, DeriveInput, Expr, Fields, Ident, Lit, Meta, MetaList, MetaNameValue, Token, Type,
+    parse_macro_input, punctuated::Punctuated,
 };
 
 #[proc_macro_derive(Validate, attributes(validate))]
@@ -42,7 +42,21 @@ pub fn validate_derive(input: TokenStream) -> TokenStream {
                         });
                     }
                     Meta::List(list) if list.path.is_ident("length") => {
-                        field_checks.push(parse_length_rule(field_name, &list));
+                        todo!()
+                    }
+                    Meta::NameValue(name_value)=>{
+                        match  &name_value.path{
+                            path if path.is_ident("min")=>{
+                                field_checks.push(parse_comparison_rule(field_name, &f.ty, &name_value));
+                            }
+                            path if path.is_ident("max")=>{
+                                field_checks.push(parse_comparison_rule(field_name, &f.ty, &name_value));
+                            }
+                            _ => {
+                                panic!("This case for: {} and type: {:#?} is not handled",field_name, name_value
+                                    )
+                            }
+                        }
                     }
                     _ => { /* Ignore unknown rules */ }
                 }
@@ -53,9 +67,9 @@ pub fn validate_derive(input: TokenStream) -> TokenStream {
     });
 
     let expanded = quote! {
-        impl my_validator::Validate for #name {
-            fn validate(&self) -> Result<(), my_validator::ValidationErrors> {
-                let mut errors = my_validator::ValidationErrors::new();
+        impl valipower::Validate for #name {
+            fn validate(&self) -> Result<(), valipower::ValidationErrors> {
+                let mut errors = valipower::ValidationErrors::new();
 
                 #(#field_validators)*
 
@@ -71,43 +85,76 @@ pub fn validate_derive(input: TokenStream) -> TokenStream {
     TokenStream::from(expanded)
 }
 
-fn parse_length_rule(field_name: &Ident, list: &MetaList) -> proc_macro2::TokenStream {
-    let mut min_val: Option<usize> = None;
-    let mut max_val: Option<usize> = None;
+fn parse_comparison_rule(
+    field_name: &Ident,
+    field_type: &Type,
+    nv: &MetaNameValue, // nv stands for NameValue, e.g., `min = 10`
+) -> proc_macro2::TokenStream {
+    // 1. 🧐 First, check if the field's type is a number.
+    // This is crucial for providing clear compile-time errors.
+    let supported_numeric_types = [
+        "u8", "u16", "u32", "u64", "u128", "usize", "i8", "i16", "i32", "i64", "i128", "isize",
+        "f32", "f64",
+    ];
+    let supported_string_types = ["String"];
 
-    let nested = list
-        .parse_args_with(Punctuated::<Meta, Token![,]>::parse_terminated)
-        .unwrap();
-
-    for meta in nested {
-        if let Meta::NameValue(nv) = meta {
-            if let Expr::Lit(expr_lit) = nv.value {
-                if let Lit::Int(lit_int) = expr_lit.lit {
-                    if nv.path.is_ident("min") {
-                        min_val = Some(lit_int.base10_parse().unwrap());
-                    } else if nv.path.is_ident("max") {
-                        max_val = Some(lit_int.base10_parse().unwrap());
-                    }
-                }
+    let type_path = match field_type {
+        Type::Path(type_path) => {
+            if !supported_numeric_types
+                .iter()
+                .any(|t| type_path.path.is_ident(t))
+                && !supported_string_types
+                    .iter()
+                    .any(|t| type_path.path.is_ident(t))
+            {
+                panic!(
+                    "The `min` and `max` validators can only be applied to numeric or String fields."
+                );
             }
+            type_path
+        }
+        _ => {
+            panic!("The `min` and `max` validators are not supported for this complex field type.");
+        }
+    };
+
+    let value = &nv.value;
+
+    if type_path.path.is_ident("String") {
+        if nv.path.is_ident("min") {
+            return quote! {
+                    if self.#field_name.len() < #value {
+                    errors.add(
+                        stringify!(#field_name),
+                        "min",
+                        &format!("Length must be at least {}.", #value)
+                    );
+                }
+            };
+        }
+        if nv.path.is_ident("max") {
+            return quote! {
+                    if self.#field_name.len() > #value {
+                    errors.add(
+                        stringify!(#field_name),
+                        "min",
+                        &format!("Length must be no more than {}.", #value)
+                    );
+                }
+            };
+        }
+        if nv.path.is_ident("equals") {
+            return quote! {
+                    if self.#field_name.len() == #value {
+                    errors.add(
+                        stringify!(#field_name),
+                        "min",
+                        &format!("Length must be exactly {}.", #value)
+                    );
+                }
+            };
         }
     }
 
-    let mut checks = vec![];
-    if let Some(min) = min_val {
-        checks.push(quote! {
-            if self.#field_name.len() < #min {
-                errors.add(stringify!(#field_name), "length", &format!("Length must be at least {}.", #min));
-            }
-        });
-    }
-    if let Some(max) = max_val {
-        checks.push(quote! {
-            if self.#field_name.len() > #max {
-                errors.add(stringify!(#field_name), "length", &format!("Length must be no more than {}.", #max));
-            }
-        });
-    }
-
-    quote! { #(#checks)* }
+    panic!("unhandled")
 }

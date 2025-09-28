@@ -817,13 +817,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "entity"
-version = "0.1.0"
-dependencies = [
- "sea-orm",
-]
-
-[[package]]
 name = "enumflags2"
 version = "0.7.12"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3538,7 +3531,6 @@ dependencies = [
 name = "template"
 version = "0.1.0"
 dependencies = [
- "entity",
  "migration",
  "salvo",
  "sea-orm",

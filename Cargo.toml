@@ -5,11 +5,10 @@ edition = "2024"
 
 
 [workspace]
-members = [".", "entity", "migration", "valipower", "valipower-macros"]
+members = [".",  "migration", "valipower", "valipower-macros"]
 
 
 [dependencies]
-entity = { path = "entity" }
 migration = { path = "migration" } # depends on your needs
 
 salvo = { version = "0.84.0", features = ["oapi"] }
