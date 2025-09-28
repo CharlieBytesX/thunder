@@ -4,6 +4,10 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
+async-trait = "0.1.89"
+fmt = "0.1.0"
+salvo = { version = "0.84.0", features = ["oapi"] }
+salvo_core = "0.84.0"
 valipower-macros = {path="../valipower-macros"}
 
 [dependencies.serde]

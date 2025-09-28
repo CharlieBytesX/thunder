@@ -1,5 +1,6 @@
 // In my-validator/src/lib.rs
 use std::collections::HashMap;
+mod salvo_extractor;
 
 // Represents a single validation error
 #[derive(Debug)]
@@ -37,9 +38,6 @@ impl ValidationErrors {
             None => todo!(),
         }
     }
-    // Methods to add errors, check if empty, etc.
-    //
-    // ...
 }
 pub trait Validate {
     fn validate(&self) -> Result<(), ValidationErrors>;
