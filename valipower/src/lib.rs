@@ -1,5 +1,6 @@
 // In my-validator/src/lib.rs
 use std::collections::HashMap;
+mod file;
 mod salvo_extractor;
 
 // Represents a single validation error
@@ -44,4 +45,7 @@ pub trait Validate {
 }
 
 // Re-export the derive macro from the other crate
+pub use file::*;
+pub use salvo_extractor::FromMultipart;
+pub use salvo_extractor::MultipartValidated;
 pub use valipower_macros::Validate;

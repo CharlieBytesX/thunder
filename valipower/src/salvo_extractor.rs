@@ -1,10 +1,20 @@
 use std::fmt::{self, Debug, Display, Formatter};
 use std::ops::{Deref, DerefMut};
 
-use salvo::oapi::{Components, Content, EndpointArgRegister, RequestBody, ToRequestBody, ToSchema};
+use salvo::http::StatusError;
+use salvo::oapi::{
+    Components, Content, EndpointArgRegister, Operation, RequestBody, ToRequestBody, ToSchema,
+};
 use salvo_core::extract::{Extractible, Metadata};
 use salvo_core::{Request, Writer, async_trait};
-use serde::{Deserialize, Deserializer};
+
+#[async_trait]
+pub trait FromMultipart: Sized {
+    /// The error type returned when parsing fails.
+
+    /// The method that performs the custom parsing logic.
+    async fn parse_from_multipart(req: &mut Request) -> Result<Self, StatusError>;
+}
 
 pub struct MultipartValidated<T>(pub T);
 impl<T> MultipartValidated<T> {
@@ -30,7 +40,7 @@ impl<T> DerefMut for MultipartValidated<T> {
 
 impl<'de, T> ToRequestBody for MultipartValidated<T>
 where
-    T: Deserialize<'de> + ToSchema,
+    T: ToSchema,
 {
     fn to_request_body(components: &mut Components) -> RequestBody {
         RequestBody::new()
@@ -60,7 +70,7 @@ impl<T: Display> Display for MultipartValidated<T> {
 
 impl<'ex, T> Extractible<'ex> for MultipartValidated<T>
 where
-    T: Deserialize<'ex> + Send,
+    T: Send + FromMultipart + Debug,
 {
     fn metadata() -> &'static Metadata {
         static METADATA: Metadata = Metadata::new("");
@@ -69,32 +79,21 @@ where
     async fn extract(
         req: &'ex mut Request,
     ) -> Result<Self, impl Writer + Send + fmt::Debug + 'static> {
-        req.parse_form().await
-    }
-    async fn extract_with_arg(
-        req: &'ex mut Request,
-        _arg: &str,
-    ) -> Result<Self, impl Writer + Send + fmt::Debug + 'static> {
-        Self::extract(req).await
-    }
-}
-
-impl<'de, T> Deserialize<'de> for MultipartValidated<T>
-where
-    T: Deserialize<'de>,
-{
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-    where
-        D: Deserializer<'de>,
-    {
-        T::deserialize(deserializer).map(MultipartValidated)
+        let value = match T::parse_from_multipart(req).await {
+            Ok(v) => v,
+            Err(e) => {
+                //TODO: verify if its ok
+                return Err(e);
+            }
+        };
+        return Ok(MultipartValidated(value));
     }
 }
 
 #[async_trait]
 impl<'de, T> EndpointArgRegister for MultipartValidated<T>
 where
-    T: Deserialize<'de> + ToSchema,
+    T: ToSchema,
 {
     fn register(components: &mut Components, operation: &mut Operation, _arg: &str) {
         let request_body = Self::to_request_body(components);

@@ -1,16 +1,17 @@
 use std::fmt::Debug;
 
-use salvo::oapi::extract::*;
+use salvo::oapi::{BasicType, Object, extract::*};
 use salvo::{Extractible, prelude::*};
 use sea_orm::ActiveModelBehavior;
-use valipower::Validate;
+use serde::Deserialize;
+use valipower::{FromMultipart, MultipartValidated, UploadedFile, Validate};
 
 #[endpoint]
-async fn hello(name: QueryParam<String, false>) -> String {
-    format!("Hello, {}!", name.as_deref().unwrap_or("World"))
+async fn hello(name: FormBody<String>, e: FormFile) -> String {
+    todo!()
 }
 #[endpoint]
-async fn bye(name: MultiPartFormDataValidated<UserProfile>) {
+async fn bye(name: MultipartValidated<UserProfile>) {
 
     // format!("Hello, {}!", name.as_deref().unwrap_or("World"))
 }
@@ -20,26 +21,34 @@ struct Waza {
     id: String,
 }
 
-#[derive(Debug)]
-pub struct UploadedFile {
-    pub path: std::path::PathBuf,
-    pub file_name: Option<String>,
-    pub content_type: Option<String>,
-}
-
-impl ToSchema for UploadedFile {
-    fn to_schema(
-        components: &mut salvo::oapi::Components,
-    ) -> salvo::oapi::RefOr<salvo::oapi::schema::Schema> {
-        salvo::oapi::RefOr::Type()
-    }
-}
-
 #[derive(Debug, ToSchema)]
 pub struct UserProfile {
     pub username: String,
     pub email: String,
     pub avatar: UploadedFile, // Para un solo archivo
+}
+
+#[async_trait::async_trait]
+impl FromMultipart for UserProfile {
+    // async fn parse_from_multipart(req: &Request) -> Result<Self, StatusError> {
+    // }
+    //
+    async fn parse_from_multipart(req: &mut Request) -> Result<Self, StatusError> {
+        // Now you can use `.await` safely here
+        let username: String = req.form("username").await.unwrap();
+        let email: String = req.form("email").await.unwrap();
+        let file = req.file("avatar").await.unwrap().clone();
+
+        Ok(UserProfile {
+            username: username,
+            email: email,
+            avatar: UploadedFile {
+                file_name: todo!(),
+                path: file.path().clone(),
+                content_type: file.content_type(),
+            },
+        })
+    }
 }
 
 #[derive(Debug, Validate)]
