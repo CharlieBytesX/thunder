@@ -33,7 +33,7 @@ impl FromMultipart for UserProfile {
     // async fn parse_from_multipart(req: &Request) -> Result<Self, StatusError> {
     // }
     //
-    async fn parse_from_multipart(req: &mut Request) -> Result<Self, StatusError> {
+    async fn parse_from_multipart(req: &mut Request) -> Result<Self, valipower::ValidationErrors> {
         // Now you can use `.await` safely here
         let username: String = req.form("username").await.unwrap();
         let email: String = req.form("email").await.unwrap();

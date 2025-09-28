@@ -93,6 +93,7 @@ where
         return Ok(MultipartValidated(value));
     }
 }
+
 #[async_trait]
 impl Writer for ValidationErrors {
     async fn write(mut self, _: &mut Request, _: &mut Depot, res: &mut Response) {
