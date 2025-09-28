@@ -1,19 +1,23 @@
 use std::fmt::{self, Debug, Display, Formatter};
 use std::ops::{Deref, DerefMut};
 
-use salvo::http::StatusError;
+use salvo::http::{StatusCode, StatusError};
 use salvo::oapi::{
     Components, Content, EndpointArgRegister, Operation, RequestBody, ToRequestBody, ToSchema,
 };
+use salvo::writing::Json;
+use salvo::{Depot, Response};
 use salvo_core::extract::{Extractible, Metadata};
 use salvo_core::{Request, Writer, async_trait};
+
+use crate::ValidationErrors;
 
 #[async_trait]
 pub trait FromMultipart: Sized {
     /// The error type returned when parsing fails.
 
     /// The method that performs the custom parsing logic.
-    async fn parse_from_multipart(req: &mut Request) -> Result<Self, StatusError>;
+    async fn parse_from_multipart(req: &mut Request) -> Result<Self, ValidationErrors>;
 }
 
 pub struct MultipartValidated<T>(pub T);
@@ -87,6 +91,16 @@ where
             }
         };
         return Ok(MultipartValidated(value));
+    }
+}
+#[async_trait]
+impl Writer for ValidationErrors {
+    async fn write(mut self, _: &mut Request, _: &mut Depot, res: &mut Response) {
+        res.status_code(
+            self.status_code
+                .unwrap_or(StatusCode::INTERNAL_SERVER_ERROR),
+        );
+        res.render(Json(self));
     }
 }
 
