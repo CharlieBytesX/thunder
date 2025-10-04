@@ -3828,6 +3828,7 @@ dependencies = [
  "salvo",
  "sea-orm",
  "serde",
+ "serde_json",
  "sha2",
  "tokio",
  "tracing",
@@ -4335,10 +4336,13 @@ version = "0.1.0"
 dependencies = [
  "async-trait",
  "fmt",
+ "hex",
  "once_cell",
  "salvo",
  "salvo_core",
  "serde",
+ "serde_json",
+ "sha2",
  "tera",
  "valipower-macros",
 ]

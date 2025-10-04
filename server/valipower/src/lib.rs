@@ -56,6 +56,7 @@ pub trait Validate {
 
 // Re-export the derive macro from the other crate
 pub use file::*;
+pub use inertia::*;
 use salvo::http::StatusCode;
 pub use salvo_extractor::FromMultipart;
 pub use salvo_extractor::MultipartValidated;

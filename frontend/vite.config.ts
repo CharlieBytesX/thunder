@@ -6,6 +6,7 @@ export default defineConfig({
 	plugins: [react()],
 	build: {
 		manifest: true,
+		outDir: "../server/public/assets",
 		rollupOptions: {
 			input: "src/main.tsx",
 		},
