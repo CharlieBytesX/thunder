@@ -3830,10 +3830,10 @@ dependencies = [
  "serde",
  "serde_json",
  "sha2",
+ "thunder",
  "tokio",
  "tracing",
  "tracing-subscriber",
- "valipower",
 ]
 
 [[package]]
@@ -3905,6 +3905,32 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f60246a4944f24f6e018aa17cdeffb7818b76356965d03b07d6a9886e8962185"
 dependencies = [
  "cfg-if",
+]
+
+[[package]]
+name = "thunder"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "fmt",
+ "hex",
+ "once_cell",
+ "salvo",
+ "salvo_core",
+ "serde",
+ "serde_json",
+ "sha2",
+ "tera",
+ "thunder-macros",
+]
+
+[[package]]
+name = "thunder-macros"
+version = "0.1.0"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 2.0.106",
 ]
 
 [[package]]
@@ -4328,32 +4354,6 @@ dependencies = [
  "js-sys",
  "serde",
  "wasm-bindgen",
-]
-
-[[package]]
-name = "valipower"
-version = "0.1.0"
-dependencies = [
- "async-trait",
- "fmt",
- "hex",
- "once_cell",
- "salvo",
- "salvo_core",
- "serde",
- "serde_json",
- "sha2",
- "tera",
- "valipower-macros",
-]
-
-[[package]]
-name = "valipower-macros"
-version = "0.1.0"
-dependencies = [
- "proc-macro2",
- "quote",
- "syn 2.0.106",
 ]
 
 [[package]]

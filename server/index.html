@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>frontend</title>
+
+    {% if is_development %}
+    <script
+      type="module"
+      src="http://localhost:5173/src/main.tsx"
+    ></script>
+    {% else %}
+    <link rel="stylesheet" href="{{ css_path }}" />
+    <script type="module" src="{{ js_path }}"></script>
+    {% endif %}
+  </head>
+  <body>
+    <div id="root" data-page="{{ page | safe }}"></div>
+    <!-- <script type="module" src="/src/main.tsx"></script> -->
+  </body>
+</html>

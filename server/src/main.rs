@@ -5,7 +5,7 @@ use salvo::oapi::{BasicType, Object, extract::*};
 use salvo::{Extractible, prelude::*};
 use sea_orm::ActiveModelBehavior;
 use serde::Deserialize;
-use valipower::{FromMultipart, MultipartValidated, UploadedFile, Validate};
+use thunder::{FromMultipart, Inertia, MultipartValidated, UploadedFile, Validate};
 
 #[endpoint]
 async fn hello(name: FormBody<String>) -> String {
@@ -20,6 +20,11 @@ async fn bye(name: MultipartValidated<UserProfile>) {
 async fn file_t(data: FormBody<Waza>, file_name: FormFile) {
 
     // format!("Hello, {}!", name.as_deref().unwrap_or("World"))
+}
+
+#[handler]
+async fn inertia_test_endpoint() -> Inertia<()> {
+    Inertia::new_no_props("hello")
 }
 
 #[derive(ToSchema, Debug, Deserialize)]
@@ -40,7 +45,7 @@ impl FromMultipart for UserProfile {
     // async fn parse_from_multipart(req: &Request) -> Result<Self, StatusError> {
     // }
     //
-    async fn parse_from_multipart(req: &mut Request) -> Result<Self, valipower::ValidationErrors> {
+    async fn parse_from_multipart(req: &mut Request) -> Result<Self, thunder::ValidationErrors> {
         // Now you can use `.await` safely here
         let username: String = req.form("username").await.unwrap();
         let email: String = req.form("email").await.unwrap();

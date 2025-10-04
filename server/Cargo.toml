@@ -5,7 +5,7 @@ edition = "2024"
 
 
 [workspace]
-members = [".",  "migration", "valipower", "valipower-macros"]
+members = [".",  "migration", "thunder", "thunder-macros"]
 
 
 [dependencies]
@@ -21,4 +21,4 @@ sha2 = "0.10.9"
 tokio = { version = "1.47.1", features = ["macros"] }
 tracing = "0.1.41"
 tracing-subscriber = "0.3.20"
-valipower = {path = "./valipower"}
+thunder = {path = "./thunder"}

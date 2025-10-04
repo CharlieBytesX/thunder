@@ -67,9 +67,9 @@ pub fn validate_derive(input: TokenStream) -> TokenStream {
     });
 
     let expanded = quote! {
-        impl valipower::Validate for #name {
-            fn validate(&self) -> Result<(), valipower::ValidationErrors> {
-                let mut errors = valipower::ValidationErrors::new();
+        impl thunder::Validate for #name {
+            fn validate(&self) -> Result<(), thunder::ValidationErrors> {
+                let mut errors = thunder::ValidationErrors::new();
 
                 #(#field_validators)*
 
