@@ -22,7 +22,7 @@ async fn file_t(data: FormBody<Waza>, file_name: FormFile) {
     // format!("Hello, {}!", name.as_deref().unwrap_or("World"))
 }
 
-#[handler]
+#[endpoint]
 async fn inertia_test_endpoint() -> Inertia<()> {
     Inertia::new_no_props("hello")
 }

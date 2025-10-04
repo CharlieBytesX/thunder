@@ -5,6 +5,7 @@ use once_cell::sync::Lazy;
 use salvo::{
     Depot, Request, Response, Writer, async_trait,
     http::{HeaderValue, header},
+    oapi::ToSchema,
     writing::Text,
 };
 use serde::Serialize;
@@ -15,7 +16,7 @@ use sha2::{Digest, Sha256}; // Import hashing tools
 
 // This is where the magic happens. We teach Salvo how to render our `Inertia` struct.
 #[async_trait]
-impl<T: Serialize + Send> Writer for Inertia<T> {
+impl<T: Serialize + Send + salvo::prelude::ToSchema> Writer for Inertia<T> {
     async fn write(mut self, req: &mut Request, depot: &mut Depot, res: &mut Response) {
         // 1. Get shared state: the Tera templating engine.
         let tera = depot.obtain::<Tera>().unwrap();
@@ -133,12 +134,15 @@ pub struct Page<T: Serialize + Send> {
 }
 
 // Our custom responder struct.
-pub struct Inertia<T: Serialize> {
+pub struct Inertia<T: Serialize + ToSchema + Send> {
     component: String,
     props: Option<T>,
 }
 
-impl<T: Serialize> Inertia<T> {
+impl<T: Serialize> Inertia<T>
+where
+    T: ToSchema + Send + Serialize,
+{
     pub fn new(component: impl Into<String>, props: T) -> Self {
         Self {
             component: component.into(),
@@ -151,5 +155,14 @@ impl<T: Serialize> Inertia<T> {
             component: component.into(),
             props: None,
         }
+    }
+}
+
+impl<T: salvo::oapi::EndpointOutRegister> Inertia<T>
+where
+    T: Serialize + ToSchema + Send,
+{
+    fn register(components: &mut salvo::oapi::Components, operation: &mut salvo::oapi::Operation) {
+        todo!()
     }
 }
