@@ -1,6 +1,7 @@
 // In my-validator/src/lib.rs
 use std::collections::HashMap;
 mod file;
+mod inertia;
 mod salvo_extractor;
 
 // Represents a single validation error

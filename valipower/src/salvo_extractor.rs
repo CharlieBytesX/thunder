@@ -49,11 +49,14 @@ where
     fn to_request_body(components: &mut Components) -> RequestBody {
         RequestBody::new()
             .description("Extract form format data from request.")
+            // .add_content(
+            //     "application/x-www-form-urlencoded",
+            //     Content::new(T::to_schema(components)),
+            // )
             .add_content(
-                "application/x-www-form-urlencoded",
+                "multipart/form-data",
                 Content::new(T::to_schema(components)),
             )
-            .add_content("multipart/*", Content::new(T::to_schema(components)))
     }
 }
 

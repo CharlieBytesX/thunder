@@ -1,13 +1,14 @@
 use std::fmt::Debug;
 
 use salvo::oapi::{BasicType, Object, extract::*};
+
 use salvo::{Extractible, prelude::*};
 use sea_orm::ActiveModelBehavior;
 use serde::Deserialize;
 use valipower::{FromMultipart, MultipartValidated, UploadedFile, Validate};
 
 #[endpoint]
-async fn hello(name: FormBody<String>, e: FormFile) -> String {
+async fn hello(name: FormBody<String>) -> String {
     todo!()
 }
 #[endpoint]
@@ -15,10 +16,16 @@ async fn bye(name: MultipartValidated<UserProfile>) {
 
     // format!("Hello, {}!", name.as_deref().unwrap_or("World"))
 }
+#[endpoint]
+async fn file_t(data: FormBody<Waza>, file_name: FormFile) {
 
-#[derive(ToSchema)]
+    // format!("Hello, {}!", name.as_deref().unwrap_or("World"))
+}
+
+#[derive(ToSchema, Debug, Deserialize)]
 struct Waza {
     id: String,
+    name: String,
 }
 
 #[derive(Debug, ToSchema)]
@@ -53,7 +60,7 @@ impl FromMultipart for UserProfile {
 
 #[derive(Debug, Validate)]
 struct Name {
-    #[validate(email, min = 34)]
+    #[validate(email, min = 34, max = 3)]
     field: String,
 }
 
@@ -61,7 +68,12 @@ struct Name {
 async fn main() {
     tracing_subscriber::fmt().init();
 
-    let router = Router::new().push(Router::with_path("hello").get(hello));
+    let router = Router::new().push(
+        Router::with_path("hello")
+            .get(hello)
+            .patch(bye)
+            .post(file_t),
+    );
     let doc = OpenApi::new("test api", "0.0.1").merge_router(&router);
 
     let router = router
