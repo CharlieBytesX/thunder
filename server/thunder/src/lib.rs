@@ -3,6 +3,7 @@ use std::collections::HashMap;
 mod file;
 mod inertia;
 mod salvo_extractor;
+// mod tera;
 
 // Represents a single validation error
 #[derive(Debug, Serialize)]
@@ -61,4 +62,5 @@ use salvo::http::StatusCode;
 pub use salvo_extractor::FromMultipart;
 pub use salvo_extractor::MultipartValidated;
 use serde::Serialize;
+pub mod tera_helpers;
 pub use thunder_macros::Validate;

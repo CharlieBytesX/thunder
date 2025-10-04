@@ -2,9 +2,10 @@ use std::fmt::Debug;
 
 use salvo::oapi::{BasicType, Object, extract::*};
 
+use salvo::routing::delete;
 use salvo::{Extractible, prelude::*};
 use sea_orm::ActiveModelBehavior;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use thunder::{FromMultipart, Inertia, MultipartValidated, UploadedFile, Validate};
 
 #[endpoint]
@@ -27,7 +28,7 @@ async fn inertia_test_endpoint() -> Inertia<()> {
     Inertia::new_no_props("hello")
 }
 
-#[derive(ToSchema, Debug, Deserialize)]
+#[derive(ToSchema, Debug, Deserialize, Serialize)]
 struct Waza {
     id: String,
     name: String,
@@ -77,7 +78,8 @@ async fn main() {
         Router::with_path("hello")
             .get(hello)
             .patch(bye)
-            .post(file_t),
+            .post(file_t)
+            .delete(inertia_test_endpoint),
     );
     let doc = OpenApi::new("test api", "0.0.1").merge_router(&router);
 
