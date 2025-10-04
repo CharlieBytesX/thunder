@@ -20,9 +20,6 @@ use crate::tera_helpers; // Import hashing tools
 #[async_trait]
 impl<T: Serialize + Send + salvo::prelude::ToSchema> Writer for Inertia<T> {
     async fn write(mut self, req: &mut Request, depot: &mut Depot, res: &mut Response) {
-        // 1. Get shared state: the Tera templating engine.
-        // let tera = depot.obtain::<Tera>().unwrap();
-
         let tera: &tera::Tera = &tera_helpers::TERA_ENGINE;
         // 2. Define a static asset version. In a real app, this might come from a file hash or env var.
         let version = ASSET_VERSION.to_string();
